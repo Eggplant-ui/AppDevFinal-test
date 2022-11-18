@@ -9,6 +9,7 @@ data class NoteList (
     val listOfNotes : List<Note>
 )
 
+//just need to delete hashedPoster and timestamp and add upvote: Int, downvote: Int
 @JsonClass(generateAdapter = true)
 data class Note (
     val title : String,

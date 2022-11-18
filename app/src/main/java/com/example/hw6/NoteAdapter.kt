@@ -44,11 +44,12 @@ class NoteAdapter (
         var red = 255- note.id
 
         holder.up.setOnClickListener{
-            holder.titleText.text = "upvoted"
+            //call update(id, upvote)
+            holder.titleText.text = "upvoted "+note.id.toString()
         }
         holder.down.setOnClickListener{
-            holder.titleText.text = "downvoted"
-
+            holder.titleText.text = "downvoted "+note.id.toString()
+            //call update(id, upvote
         }
 
 
