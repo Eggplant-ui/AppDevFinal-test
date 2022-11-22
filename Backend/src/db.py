@@ -6,9 +6,6 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-association_table = db.Table("association", db.Column("task_id", db.Integer, db.ForeignKey(
-    "task.id")), db.Column("category_id", db.Integer, db.ForeignKey("category.id")))
-
 
 class User(db.Model):
     """

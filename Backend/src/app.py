@@ -136,8 +136,8 @@ def get_post(post_id):
     return success_response(post.serialize())
 
 
-@app.route("/posts/<int:post_id>/up/")
-def get_post(post_id):
+@app.route("/posts/<int:post_id>/up/", methods=["POST"])
+def upvote_post(post_id):
     """
     Endpoint for upvoting a post by id
     """
@@ -146,11 +146,11 @@ def get_post(post_id):
         return failure_response("Post not found")
     post.votes += 1
     db.session.commit()
-    return success_response(post.serialize())
+    return success_response(post.serialize(), 201)
 
 
-@app.route("/posts/<int:post_id>/down/")
-def get_post(post_id):
+@app.route("/posts/<int:post_id>/down/", methods=["POST"])
+def downvote_post(post_id):
     """
     Endpoint for downvoting a post by id
     """
@@ -159,7 +159,7 @@ def get_post(post_id):
         return failure_response("Post not found")
     post.votes -= 1
     db.session.commit()
-    return success_response(post.serialize())
+    return success_response(post.serialize(), 201)
 
 
 # Template for protected endpoints
@@ -178,90 +178,60 @@ def secret_message():
     return success_response({"message": "You have successfully implemented sessions"})
 
 
+@app.route("/user/")
+def get_user():
+    """
+    Endpoint for getting the logged in user
+    """
+    success, session_token = extract_token(request)
+    if not success:
+        return failure_response("Could not extract session token", 400)
+    user = users_dao.get_user_by_session_token(session_token)
+    if user is None or not user.verify_session_token(session_token):
+        return failure_response("Invalid session token", 400)
+    return success_response(user.serialize())
+
+
+@app.route("/user/", methods=["POST"])
+def make_post():
+    """
+    Endpoint for making a post from the logged in user
+    """
+    success, session_token = extract_token(request)
+    if not success:
+        return failure_response("Could not extract session token", 400)
+    user = users_dao.get_user_by_session_token(session_token)
+    if user is None or not user.verify_session_token(session_token):
+        return failure_response("Invalid session token", 400)
+    body = json.loads(request.data)
+    post = Post(content=body.get(
+        "content"), user_id=user.id)
+    db.session.add(post)
+    db.session.commit()
+    return success_response(post.serialize(), 201)
+
+
+@app.route("/user/<int:post_id>/", methods=["DELETE"])
+def secret_message(post_id):
+    """
+    Endpoint for deleting a post of the logged in user
+    """
+    success, session_token = extract_token(request)
+    if not success:
+        return failure_response("Could not extract session token", 400)
+    user = users_dao.get_user_by_session_token(session_token)
+    if user is None or not user.verify_session_token(session_token):
+        return failure_response("Invalid session token", 400)
+    post = Post.query.filter_by(id=post_id).first()
+    if post is None:
+        return failure_response("Post not found")
+    user_posts_ids = [[p.id for p in user.posts]]
+    if not (post_id in user_posts_ids):
+        return failure_response("Cannot delete another user's post", 400)
+    db.session.delete(post)
+    db.session.commit()
+    return success_response(post.serialize())
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
-
-###################### Sample code below ###############################
-
-
-@app.route("/tasks/", methods=["POST"])
-def create_task():
-    """
-    Endpoint for creating a new task
-    """
-    body = json.loads(request.data)
-    new_task = Task(description=body.get("description"), done=body.get("done"))
-    db.session.add(new_task)
-    db.session.commit()
-    return success_response(new_task.serialize(), 201)
-
-
-@app.route("/tasks/<int:task_id>/", methods=["POST"])
-def update_task(task_id):
-    """
-    Endpoint for updating a task by id
-    """
-    task = Task.query.filter_by(id=task_id).first()
-    if task is None:
-        return failure_response("Task not found")
-    body = json.loads(request.data)
-    task.description = body.get("description", task.description)
-    task.done = body.get("done", task.done)
-    db.session.commit()
-    return success_response(task.serialize())
-
-
-@app.route("/tasks/<int:task_id>/", methods=["DELETE"])
-def delete_task(task_id):
-    """
-    Endpoint for deleting a task by id
-    """
-    task = Task.query.filter_by(id=task_id).first()
-    if task is None:
-        return failure_response("Task not found")
-    db.session.delete(task)
-    db.session.commit()
-    return success_response(task.serialize())
-
-
-# -- SUBTASK ROUTES ---------------------------------------------------
-
-
-@app.route("/tasks/<int:task_id>/subtasks/", methods=["POST"])
-def create_subtask(task_id):
-    """
-    Endpoint for creating a subtask
-    for a task by id
-    """
-    body = json.loads(request.data)
-    task = Task.query.filter_by(id=task_id).first()
-    if task is None:
-        return failure_response("Task not found")
-    new_subtask = Subtask(description=body.get(
-        "description"), done=body.get("done"), task_id=task_id)
-    db.session.add(new_subtask)
-    db.session.commit()
-    return success_response(new_subtask.serialize(), 201)
-
-
-# -- CATEGORY ROUTES --------------------------------------------------
-
-
-@app.route("/tasks/<int:task_id>/category/", methods=["POST"])
-def assign_category(task_id):
-    """
-    Endpoint for assigning a category
-    to a task by id
-    """
-    body = json.loads(request.data)
-    task = Task.query.filter_by(id=task_id).first()
-    if task is None:
-        return failure_response("Task not found")
-    description = body.get("description")
-    color = body.get("color")
-    category = Category.query.filter_by(color=color).first()
-    if category is None:
-        category = Category(description=description, color=color)
-    task.categories.append(category)
-    db.session.commit()
-    return success_response(task.serialize())
