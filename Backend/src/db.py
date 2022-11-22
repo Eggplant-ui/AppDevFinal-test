@@ -1,144 +1,112 @@
-from select import KQ_NOTE_LOWAT
+import datetime
+import hashlib
+import os
+import bcrypt
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-instructor_table = db.Table("instructor", db.Column("course_id", db.Integer, db.ForeignKey(
-    "course.id")), db.Column("user_id", db.Integer, db.ForeignKey("user.id")))
-
-student_table = db.Table("student", db.Column("course_id", db.Integer, db.ForeignKey(
-    "course.id")), db.Column("user_id", db.Integer, db.ForeignKey("user.id")))
-
-# your classes here
-
-
-class Course(db.Model):
-    """
-    Course model
-    """
-    __tablename__ = "course"
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    code = db.Column(db.String, nullable=False)
-    name = db.Column(db.String, nullable=False)
-    assignments = db.relationship("Assignment", cascade="delete")
-    instructors = db.relationship(
-        "User", secondary=instructor_table, back_populates="courses_as_i")
-    students = db.relationship(
-        "User", secondary=student_table, back_populates="courses_as_s")
-
-    def __init__(self, **kwargs):
-        """
-        Creates a Course object
-        """
-        self.code = kwargs.get("code")
-        self.name = kwargs.get("name")
-
-    def serialize(self):
-        """
-        Serializes a Course object
-        """
-        return {
-            "id": self.id,
-            "code": self.code,
-            "name": self.name,
-            "assignments": [a.simple_serialize() for a in self.assignments],
-            "instructors": [i.simple_serialize() for i in self.instructors],
-            "students": [s.simple_serialize() for s in self.students]
-        }
-
-    def simple_serialize(self):
-        """
-        Simple serializes a Course object
-        """
-        return {
-            "id": self.id,
-            "code": self.code,
-            "name": self.name,
-        }
+association_table = db.Table("association", db.Column("task_id", db.Integer, db.ForeignKey(
+    "task.id")), db.Column("category_id", db.Integer, db.ForeignKey("category.id")))
 
 
 class User(db.Model):
     """
-    User model
+    User Model
+
+    Has a one to many relationship with Post
     """
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String, nullable=False)
-    netid = db.Column(db.String, nullable=False)
-    courses_as_i = db.relationship(
-        "Course", secondary=instructor_table, back_populates="instructors")
-    courses_as_s = db.relationship(
-        "Course", secondary=student_table, back_populates="students")
+    username = db.Column(db.String, nullable=False)
+    password_digest = db.Column(db.String, nullable=False)
+    session_token = db.Column(db.String, nullable=False, unique=True)
+    session_expiration = db.Column(db.DateTime, nullable=False)
+    update_token = db.Column(db.String, nullable=False, unique=True)
+    posts = db.relationship("Post", cascade="delete")
 
     def __init__(self, **kwargs):
         """
-        Creates a User object
+        Initializes a User object
         """
-        self.name = kwargs.get("name")
-        self.netid = kwargs.get("netid")
+        self.username = kwargs.get("username", "")
+        self.password_digest = bcrypt.hashpw(kwargs.get(
+            "password").encode("utf8"), bcrypt.gensalt(rounds=13))
+        self.renew_session()
+
+    def _urlsafe_base_64(self):
+        """
+        Randomly generates hashed tokens (used for session/update tokens)
+        """
+        return hashlib.sha1(os.urandom(64)).hexdigest()
+
+    def renew_session(self):
+        """
+        Renews the sessions, i.e.
+        1. Creates a new session token
+        2. Sets the expiration time of the session to be a day from now
+        3. Creates a new update token
+        """
+        self.session_token = self._urlsafe_base_64()
+        self.session_expiration = datetime.datetime.now() + datetime.timedelta(days=1)
+        self.update_token = self._urlsafe_base_64()
+
+    def verify_password(self, password):
+        """
+        Verifies the password of a user
+        """
+        return bcrypt.checkpw(password.encode("utf8"), self.password_digest)
+
+    def verify_session_token(self, session_token):
+        """
+        Verifies the session token of a user
+        """
+        return session_token == self.session_token and datetime.datetime.now() < self.session_expiration
+
+    def verify_update_token(self, update_token):
+        """
+        Verifies the update token of a user
+        """
+        return update_token == self.update_token
 
     def serialize(self):
         """
         Serializes a User object
         """
-        courses = [i.simple_serialize() for i in self.courses_as_i]
-        s_courses = [s.simple_serialize() for s in self.courses_as_s]
-        courses.extend(s_courses)
         return {
             "id": self.id,
-            "name": self.name,
-            "netid": self.netid,
-            "courses": courses
-        }
-
-    def simple_serialize(self):
-        """
-        Simple serializes a User object
-        """
-        return {
-            "id": self.id,
-            "name": self.name,
-            "netid": self.netid,
+            "username": self.username,
+            "posts": [p.serialize() for p in self.posts],
         }
 
 
-class Assignment(db.Model):
+class Post(db.Model):
     """
-    Assignment model
+    Post Model
+
+    Has a many to one relationship with User
     """
-    __tablename__ = "assignment"
+    __tablename__ = "post"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    title = db.Column(db.String, nullable=False)
-    due_date = db.Column(db.Integer, nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey(
-        "course.id"), nullable=False)
+    content = db.Column(db.String, nullable=False)
+    votes = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     def __init__(self, **kwargs):
         """
-        Creates an assignment model
+        Creates a Post object
         """
-        self.title = kwargs.get("title")
-        self.due_date = kwargs.get("due_date")
-        self.course_id = kwargs.get("course_id")
+        self.content = kwargs.get("content", "")
+        self.votes = 0
+        self.user_id = kwargs.get("user_id")
 
     def serialize(self):
         """
-        Serializes an assignment object
-        """
-        course = Course.query.filter_by(id=self.course_id).first()
-        return {
-            "id": self.id,
-            "title": self.title,
-            "due_date": self.due_date,
-            "course": course.simple_serialize()
-        }
-
-    def simple_serialize(self):
-        """
-        Simple serializes an assignment object
+        Serializes a Post object
         """
         return {
             "id": self.id,
-            "title": self.title,
-            "due_date": self.due_date,
+            "content": self.content,
+            "votes": self.votes,
+            "user_id": self.user_id
         }
