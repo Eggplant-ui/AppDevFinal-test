@@ -14,7 +14,7 @@ class Voting : AppCompatActivity() {
 
         val ss:String = intent.getStringExtra("id").toString()
         //this id is used for the update call okhttp3
-        var te :TextView = findViewById(R.id.textView)
+        var te :TextView = findViewById(R.id.takeTitle)
         te.text = ss
 
         val home : Button = findViewById(R.id.homeButton)

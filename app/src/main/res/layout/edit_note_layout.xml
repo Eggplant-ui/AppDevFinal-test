@@ -8,23 +8,23 @@
 
 
     <EditText
-        android:id="@+id/editTextTextTitle2"
+        android:id="@+id/editName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:ems="10"
-        android:hint="Edit Name"
+        android:hint="Edit Take"
         android:inputType="text"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2" />
+        app:layout_constraintTop_toBottomOf="@+id/nameTitle" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/nameTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Your Name"
+        android:text="Add Your Take"
         android:textSize="28sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -34,10 +34,10 @@
         app:layout_constraintVertical_bias="0.264" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/takeTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Your Take"
+        android:text="Add Your Title"
         android:textSize="28sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -47,15 +47,15 @@
         app:layout_constraintVertical_bias="0.085" />
 
     <EditText
-        android:id="@+id/editTextTextTitle"
+        android:id="@+id/editTake"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="Edit Take"
-        app:layout_constraintBottom_toTopOf="@+id/textView2"
+        android:hint="Edit Body"
+        app:layout_constraintBottom_toTopOf="@+id/nameTitle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        app:layout_constraintTop_toBottomOf="@+id/takeTitle" />
 
     <Button
         android:id="@+id/button3"
@@ -66,7 +66,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTextTitle2" />
+        app:layout_constraintTop_toBottomOf="@+id/editName" />
 
     <Button
         android:id="@+id/homeButton"

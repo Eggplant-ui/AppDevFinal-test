@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,6 +17,8 @@ class CloudNotesActivity : AppCompatActivity(), NoteAdapter.AdapterOnClickHandle
 
         //have to delete this before turning in
         var noteslist = mutableListOf<Note>()
+
+
 
 
         val recyclerView : RecyclerView = findViewById(R.id.recycler)
@@ -39,15 +40,15 @@ class CloudNotesActivity : AppCompatActivity(), NoteAdapter.AdapterOnClickHandle
         }
 
 
-        //eventually, this takes us to addTakeActivity
-        val button : Button = findViewById(R.id.button2)//R.id.button2 is View Local Notes
+
+        val button : Button = findViewById(R.id.button2)//Sign in button
         button.setOnClickListener{
-            val text = "Going to Help"
+            val text = "Going to Sign In"
             val duration = Toast.LENGTH_SHORT
             val toast = Toast.makeText(applicationContext, text, duration)
             toast.show()
 
-            var i = Intent(this, HelpActivity::class.java)
+            var i = Intent(this, AuthenticationActivity::class.java)
             startActivity(i)
         }
 

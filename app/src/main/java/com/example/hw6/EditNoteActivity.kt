@@ -25,14 +25,16 @@ class EditNoteActivity : AppCompatActivity(), NoteAdapter.AdapterOnClickHandler 
         //then, within save button, if newNote is true then make a call to networkingUtils
         //if newNote is false, save to repository, then redirect back to Cloud Notes
 
+        //add name to take?
+        val name = intent.extras?.getString("name") ?: "Anonymous"
 
 
-        var titleText: TextView = findViewById(R.id.textView)
-        var titleText2: TextView = findViewById(R.id.textView2)
+        var titleText: TextView = findViewById(R.id.takeTitle)
+        var titleText2: TextView = findViewById(R.id.nameTitle)
 
-        var editTextTitle: EditText = findViewById(R.id.editTextTextTitle)
+        var editTextTake: EditText = findViewById(R.id.editTake)
 
-        var editTextBody: EditText = findViewById(R.id.editTextTextTitle2)
+        var editTextBody: EditText = findViewById(R.id.editName)
 
         val homeButton: Button = findViewById(R.id.homeButton)
         homeButton.setOnClickListener {
@@ -42,8 +44,12 @@ class EditNoteActivity : AppCompatActivity(), NoteAdapter.AdapterOnClickHandler 
 
         var button: Button = findViewById(R.id.button3)
 
+
+
+
+
         button.setOnClickListener{
-            val a = NoteOut(editTextTitle.text.toString(), editTextBody.text.toString(), "adw98")
+            val a = NoteOut(editTextTake.text.toString(), editTextBody.text.toString(), "adw98")
 
             postNote(a){
                 val text = "Added note to cloud: $it"
